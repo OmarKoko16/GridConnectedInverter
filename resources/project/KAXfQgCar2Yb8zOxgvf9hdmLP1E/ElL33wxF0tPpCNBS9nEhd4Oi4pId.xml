@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<Info File="CntrlPanel.mlx" GroupUUID="" Icon="" Name="CntrlPanel" Type="StartUp" Visible="0">
+    <Extension Name="StartUpPrev" Value="b32419c1-38ec-475a-9894-77318859fb2f"></Extension>
+</Info>
