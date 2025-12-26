@@ -15,7 +15,7 @@ runIDs = Simulink.sdi.getAllRunIDs;
 runID = runIDs(end);
 runData = Simulink.sdi.getRun(runID);
 runData.Name = [TstName ' - ' datestr(now, 'yyyy-mm-dd HH:MM:SS')];
-PathTestResult = [Root '\TestCases\TestResults'];
+PathTestResult = [Root 'TestCases\TestResults'];
 if Extrn == 1
     pause(5)
     StpTimeAxes =StpTimeAxes +1;

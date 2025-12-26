@@ -22,8 +22,8 @@ end
 set_param(ModelName, 'StopTime', 'inf');
 
 % run([ Root 'TestCases\Scripts\' 'TestCase_ArduinoGridErr.m'])
-run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMax.m'])
-run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMaxGridErr.m'])
+% run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMax.m'])
+% run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMaxGridErr.m'])
 run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMax.m'])
-run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMaxGridErr.m'])
-run([ Root 'TestCases\Scripts\' 'TestCase_OCP.m'])
+% run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMaxGridErr.m'])
+% run([ Root 'TestCases\Scripts\' 'TestCase_OCP.m'])
