@@ -17,16 +17,24 @@ runID = runIDs(end);
 runData = Simulink.sdi.getRun(runID);
 runData.Name = [TstName ' - ' datestr(now, 'yyyy-mm-dd HH:MM:SS')];
 PathTestResult = [Root 'TestCases\TestResults'];
+
 if Extrn == 1
     pause(5)
     StpTimeAxes =StpTimeAxes +1;
+    ModelParam.Sim = Sim;
+    ModelParam.Var = Var;
+    ModelParam.ADPTV = ADPTV;
     % PlotTestResultsExt;
     % PlotTestResultsExtVsSpeedGoat(logsout,[],StpTimeAxes,TstName,1,StpLegnd,PathTestResult)
-    PlotTestResultsExtVsSpeedGoat2(out.logsout,[],StpTimeAxes,TstName,1,StpLegnd,PathTestResult)
+    PlotTestResultsExtVsSpeedGoat2(out.logsout,[],StpTimeAxes,TstName,1,StpLegnd,PathTestResult,ModelParam)
 
 
 else
+    ModelParam.Sim = Sim;
+    ModelParam.Var = Var;
+    ModelParam.ADPTV = ADPTV;
+    ModelParam.Hil = Hil;
     % PlotTestResults;
     % PlotTestResultsExtVsSpeedGoat(out.logsout,out.logsout,StpTimeAxes,TstName,0,StpLegnd,PathTestResult)
-    PlotTestResultsExtVsSpeedGoat2(out.logsout,out.logsout,StpTimeAxes,TstName,0,StpLegnd,PathTestResult)
+    PlotTestResultsExtVsSpeedGoat2(out.logsout,out.logsout,StpTimeAxes,TstName,0,StpLegnd,PathTestResult,ModelParam)
 end
