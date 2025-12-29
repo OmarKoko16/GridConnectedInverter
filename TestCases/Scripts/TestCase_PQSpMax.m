@@ -21,19 +21,19 @@ for i = 1:length(StpTimeCalc)
 
     switch i
         case 1
-            ModReq          = boolean(1);
-            PorISel         = boolean(0);
-            EnableMonitors  = boolean(true);                          
+            setParam('ModReq',          uint16(1), 'uint16', '1', 'State Space Mode Request')
+            setParam('PorISel',         uint16(0), 'uint16', '1', 'Controller Selector (Power Control or Current Control)')
+            setParam('EnableMonitors',  uint16(1), 'uint16', '1', 'Enable Monitoring')                      
         case 2
-            PSp             = single(PwrStp);
+            setParam('PSp',             PwrStp, 'single', 'W', 'Power Setpoint')
         case 3
-            PSp             = single(0);
+            setParam('PSp',             0, 'single', 'W', 'Power Setpoint')
         case 4
-            QSp             = single(PwrStp);
+            setParam('QSp',             PwrStp, 'single', 'W', 'Reactive Power Setpoint')
         case 5
-            QSp             = single(0);
+            setParam('QSp',             0, 'single', 'W', 'Reactive Power Setpoint')
     end
-ExcuteStep(StpNames(i),StpTimeCalc(i),ModelName)
+ExcuteStep(StpNames(i),StpTimeCalc(i),Sim.ModelName)
 end
 %% Step Last
 TestEnd

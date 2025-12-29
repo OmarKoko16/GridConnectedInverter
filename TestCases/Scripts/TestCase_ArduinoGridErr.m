@@ -1,82 +1,46 @@
 TstName         = 'ArduinoGridErr';
-StpNames        = [1    2.1     2.2     3.1];
-if Extrn == 1
-    set_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationCommand', 'connect');
-    pause(15)
-    InitTime        = get_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationTime');   
-    % pause(15)
-    StpTime         = [5    5       14      1];  
-else
-    StpTime         = [1    1       14      1];
-    InitTime        = 1;
-end
-StpTimeCalc     = cumsum(StpTime) + InitTime;
-Step = 0;
-disp('Test Start');
-%% Set initial value
-Hil.HVDC_V      = 400;
-Var.Transformer_N = single(1);
-ModReq          = boolean(0);
-FrcPwr          = boolean(false);
-Test            = boolean(false);
-EnableMonitors  = boolean(false);
-PorISel         = boolean(0);
-IdSp            = single(0);
-IqSp            = single(0);
-PSp             = single(0);
-QSp             = single(0);
+StpNames        = ["1. Power Mode"    ...
+                   "2. Power Setpoint"   ...
+                   "3.Inject Failure" ...
+                   "4.Recover"];
+Fails = ["Phase Jump" "Phase Jump Recover"...
+    "Harmonics" "Harmonics Recover"...
+    "Unbalance" "Unbalance Recover"...
+    "Undervoltage" "Undervoltage Recover"...
+    "Freq -Start"...
+    "Freq -4Hz"...
+    "Freq +10Hz"...
+    "Freq Recover"];
 
-set_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationCommand', 'update');
+StpLegnd        = [StpNames(1:2) Fails StpNames(4)  "End" ];
+
 if Extrn == 1
-    set_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationMode', 'external');
+    StpTime         = [10    10       12      10];  
+    PlotAx = cumsum([10    10       ones(1,12)      10]);
 else
-    set_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationMode', 'accelerator');
-    set_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationCommand', 'start');
+    StpTime         = [1    1       12      1];
+    PlotAx = cumsum([1    1       ones(1,12)      1]);
 end
 
-
-ExcuteStep('Init',InitTime)
-%% Step 1
-Test =  boolean(false);
-
-Step = Step +1;
-ExcuteStep(StpNames(Step ),StpTimeCalc(Step ))
-%% Step 2.1
-PSp             = single(0);
-
-Step = Step +1;
-ExcuteStep(StpNames(Step ),StpTimeCalc(Step ))
-%% Step 2.2
-Test =  boolean(true);
-FrcPwr = boolean(true);
-
-Step = Step +1;
-ExcuteStep(StpNames(Step ),StpTimeCalc(Step ))
-%% Step 3.1
-Test =  boolean(false);
-FrcPwr = boolean(false);
-PSp             = single(0);
-
-Step = Step +1;
-ExcuteStep(StpNames(Step ),StpTimeCalc(Step ))
+%% Initialize
+TestInit
+%% Steps
+for i = 1:length(StpTimeCalc)
+    switch i
+        case 1
+            setParam('ModReq',      uint16(1), 'uint16', '1', 'State Space Mode Request')
+            setParam('PorISel',     uint16(0), 'uint16', '1', 'Controller Selector (Power Control or Current Control)')
+        case 2
+            setParam('PSp',         0, 'single', 'W', 'Power Setpoint')
+        case 3
+            setParam('Test',        uint16(true), 'uint16', '1', 'Enable Test Mode')
+            setParam('FrcPwr',      uint16(true), 'uint16', '1', 'Force Power Mode')
+        case 4
+            setParam('Test',        uint16(false), 'uint16', '1', 'Enable Test Mode')
+            setParam('FrcPwr',      uint16(false), 'uint16', '1', 'Force Power Mode')
+            setParam('PSp',         0, 'single', 'W', 'Power Setpoint')
+    end
+ExcuteStep(StpNames(i),StpTimeCalc(i),Sim.ModelName)
+end
 %% Step Last
-ModReq = boolean(0);
-
-
-Step = Step +1;
-ExcuteStep('Last Step',StpTimeCalc(end)+1)
-set_param('GCI_Ctrl_PLL_C2000_V1_1', 'SimulationCommand', 'stop');
-%%
-% Get all SDI run IDs
-runIDs = Simulink.sdi.getAllRunIDs;
-runID = runIDs(end);
-run = Simulink.sdi.getRun(runID);
-run.Name = [TstName ' - ' datestr(now, 'yyyy-mm-dd HH:MM:SS')];
-% StpTimeCalc = 1:StpTimeCalc(end);
-StpTimeCalc = [StpTimeCalc(1),StpTimeCalc(1)+1:1:StpTimeCalc(2)+12,StpTimeCalc(end)];
-if Extrn == 1
-    pause(2)
-    PlotTestResultsExt;
-else
-    PlotTestResults;
-end
+TestEnd

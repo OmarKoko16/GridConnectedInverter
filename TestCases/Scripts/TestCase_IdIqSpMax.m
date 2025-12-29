@@ -24,18 +24,18 @@ for i = 1:length(StpTimeCalc)
 
     switch i
         case 1
-            ModReq          = boolean(1);
-            PorISel         = boolean(1);
+            setParam('ModReq',          uint16(1), 'uint16', '1', 'State Space Mode Request')
+            setParam('PorISel',         uint16(1), 'uint16', '1', 'Controller Selector (Power Control or Current Control)')
         case 2
-            IdSp = single(CurStp);
+            setParam('IdSp',            CurStp, 'single', 'A', 'Id Setpoint')
         case 3
-            IdSp = single(0);
+            setParam('IdSp',            0, 'single', 'A', 'Id Setpoint')
         case 4
-            IqSp = single(CurStp);
+            setParam('IqSp',            CurStp, 'single', 'A', 'Iq Setpoint')
         case 5
-            IqSp = single(0);
+            setParam('IqSp',            0, 'single', 'A', 'Iq Setpoint')
     end
-ExcuteStep(StpNames(i),StpTimeCalc(i),ModelName)
+ExcuteStep(StpNames(i),StpTimeCalc(i),Sim.ModelName)
 end
 %% Step Last
 TestEnd
