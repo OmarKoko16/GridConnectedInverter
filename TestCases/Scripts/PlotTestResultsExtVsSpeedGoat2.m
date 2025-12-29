@@ -1,5 +1,6 @@
 function PlotTestResultsExtVsSpeedGoat2(C2000,Speedgoat,StpTimeCalc,TstName,isHil,StpLegnd,folder,ModelParam)
 filename = saveTestResults(C2000, 'C2000', TstName, folder, isHil,ModelParam);
+
 close all
 
 PlotAll(1).Titles = "ADC Measurments";
