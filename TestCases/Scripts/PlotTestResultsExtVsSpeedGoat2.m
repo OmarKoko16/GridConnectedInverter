@@ -161,9 +161,11 @@ function [fig,ax] = plotSignalList(plotConfig, S1, S2, StpTimeCalc, MainTitle)
         legendText = {};
         
         % --- Plot Meas1 (Primary) ---
-        p1 = plot(S1.(sigName).time, S1.(sigName).data, 'LineWidth', 1.5);
-        legendHandles(end+1) = p1;
-        legendText{end+1} = sigName;
+         if ~isempty(S1.(sigName).data)
+            p1 = plot(S1.(sigName).time, S1.(sigName).data, 'LineWidth', 1.5);
+            legendHandles(end+1) = p1;
+            legendText{end+1} = sigName;
+         end
         
         % --- Plot Meas1 (Secondary Signal from Col 5) ---
         if sigNameS1_Sec ~= "" && isfield(S1, sigNameS1_Sec)

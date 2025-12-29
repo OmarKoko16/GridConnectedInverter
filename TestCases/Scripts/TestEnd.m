@@ -26,7 +26,7 @@ if Extrn == 1
     ModelParam.ADPTV = ADPTV;
     % PlotTestResultsExt;
     % PlotTestResultsExtVsSpeedGoat(logsout,[],StpTimeAxes,TstName,1,StpLegnd,PathTestResult)
-    PlotTestResultsExtVsSpeedGoat2(out.logsout,[],StpTimeAxes,TstName,1,StpLegnd,PathTestResult,ModelParam)
+    PlotTestResultsExtVsSpeedGoat2(logsout,[],StpTimeAxes,TstName,1,StpLegnd,PathTestResult,ModelParam)
 
 
 else

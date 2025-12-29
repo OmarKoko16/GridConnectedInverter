@@ -1,84 +1,130 @@
-function [time_shift, t_common, x1_aligned, x2_aligned, info] = estimate_time_shift_robust(t1, x1, t2, x2, doPlot, maxLagSec)
-% Robust estimation of time delay between two signals.
-% Tries edge-based matching first (best for step-like signals) then GCC-PHAT.
+function [time_shift, t_grid, x1_grid, x2_shifted, debug_info] = estimate_time_shift_robust(t1, x1, t2, x2, doPlot, maxLagSec)
+% ESTIMATE_TIME_SHIFT_ROBUST Estimates delay between two signals with NaN handling.
 %
 % Usage:
-%   [time_shift, t_common, x1a, x2a, info] = estimate_time_shift_robust(t1,x1,t2,x2,true,5);
-% Outputs:
-%   time_shift : estimated delay (s), positive means x1 leads x2
-%   t_common   : common time vector (overlap)
-%   x1_aligned : x1 resampled (normalized)
-%   x2_aligned : x2 resampled and shifted to align with x1
-%   info       : struct with details (method used, candidates, etc.)
+%   [shift, t_common, x1a, x2a] = estimate_time_shift_robust(t1, x1, t2, x2, true, 5);
+%
+%   time_shift: Value to ADD to t2 to align it with t1 (t2_new = t2 + shift)
+%               or subtract from t2 if defining lag relative to t1.
+%               (Here: positive lag => x1 matches x2 shifted by lag).
+%
+% Algorithm:
+%   1. Cleans inputs (removes NaNs).
+%   2. Resamples both onto a uniform grid defined by the union of time ranges.
+%   3. Performs Cross-Correlation (normalized) to find the lag.
+%   4. Refines peak using parabolic interpolation.
 
     if nargin < 5, doPlot = false; end
     if nargin < 6, maxLagSec = inf; end
 
-    % Prepare and find overlap
-    t1 = t1(:); x1 = x1(:);
-    t2 = t2(:); x2 = x2(:);
-    valid1 = ~isnan(t1) & ~isnan(x1);
-    valid2 = ~isnan(t2) & ~isnan(x2);
-    t1 = t1(valid1); x1 = x1(valid1);
-    t2 = t2(valid2); x2 = x2(valid2);
-    t_start = max(t1(1), t2(1));
-    t_end   = min(t1(end), t2(end));
-    if t_end <= t_start
-        error('No overlapping time region between signals.');
+    %% 1. Input Cleaning
+    % Remove NaNs from original vectors to allow clean interpolation
+    mask1 = ~isnan(x1) & ~isnan(t1);
+    t1 = t1(mask1); x1 = x1(mask1);
+    
+    mask2 = ~isnan(x2) & ~isnan(t2);
+    t2 = t2(mask2); x2 = x2(mask2);
+    
+    if isempty(t1) || isempty(t2)
+        error('Input signals contain no valid data after removing NaNs.');
     end
 
-    dt = min([mean(diff(t1)), mean(diff(t2))]);
-    t_common = (t_start:dt:t_end)';
-    x1r = interp1(t1, x1, t_common, 'linear', 'extrap');
-    x2r = interp1(t2, x2, t_common, 'linear', 'extrap');
+    %% 2. Uniform Grid Generation
+    % Determine sampling periods
+    dt1 = median(diff(t1));
+    dt2 = median(diff(t2));
+    dt = min(dt1, dt2); % Use the finer resolution
+    
+    if dt <= 0 || isnan(dt), dt = 1e-3; end % Fallback safety
+    
+    % Create common time grid covering the overlap
+    t_min = max(min(t1), min(t2));
+    t_max = min(max(t1), max(t2));
+    
+    % If no overlap, use the union (cross-correlation will just handle the offset)
+    if t_min >= t_max
+        t_min = min(min(t1), min(t2));
+        t_max = max(max(t1), max(t2));
+    end
+    
+    t_grid = (t_min:dt:t_max)';
+    
+    %% 3. Resampling
+    % Interpolate onto grid. Using 'linear' handles gaps where NaNs used to be.
+    % Extrapolating with 0 ensures signals fade out outside their range.
+    x1_grid = interp1(t1, x1, t_grid, 'linear', 0);
+    x2_grid = interp1(t2, x2, t_grid, 'linear', 0);
+    
+    % Normalize (Z-score) to make correlation amplitude independent of signal scale
+    % (Avoiding divide by zero for constant signals)
+    std1 = std(x1_grid); if std1==0, std1=1; end
+    std2 = std(x2_grid); if std2==0, std2=1; end
+    
+    x1_norm = (x1_grid - mean(x1_grid)) / std1;
+    x2_norm = (x2_grid - mean(x2_grid)) / std2;
 
-    % Normalize (for methods)
-    x1n = (x1r - mean(x1r,'omitnan')) ./ std(x1r, 'omitnan');
-    x2n = (x2r - mean(x2r,'omitnan')) ./ std(x2r, 'omitnan');
-
-    info = struct();
-
-    % 1) Try edge/event-based matching
-    try
-        [shift_edge, events1, events2] = align_by_edges(t_common, x1n, t_common, x2n);
-        % If user provided a maxLagSec, check it's within bounds
-        if abs(shift_edge) <= maxLagSec
-            time_shift = shift_edge;
-            info.method = 'edge';
-            info.events1 = events1;
-            info.events2 = events2;
+    %% 4. Cross Correlation
+    % Limit lags if requested
+    if isinf(maxLagSec)
+        maxLagSamples = length(t_grid) - 1;
+    else
+        maxLagSamples = ceil(maxLagSec / dt);
+    end
+    
+    [r, lags] = xcorr(x1_norm, x2_norm, maxLagSamples, 'normalized');
+    
+    % Find peak
+    [max_corr, peak_idx] = max(abs(r)); % Absolute to handle inverted signals
+    raw_lag_samples = lags(peak_idx);
+    
+    % Parabolic Interpolation for Sub-sample accuracy
+    if peak_idx > 1 && peak_idx < length(r)
+        y1 = abs(r(peak_idx-1));
+        y2 = abs(r(peak_idx));
+        y3 = abs(r(peak_idx+1));
+        denom = 2 * (2*y2 - y1 - y3);
+        if denom ~= 0
+            delta = (y1 - y3) / denom;
+            refined_lag_samples = raw_lag_samples + delta;
         else
-            error('Edge shift too large, fallback');
+            refined_lag_samples = raw_lag_samples;
         end
-    catch
-        % 2) Fallback to GCC-PHAT
-        [shift_gcc] = align_by_gccphat(x1n, x2n, dt, maxLagSec);
-        time_shift = shift_gcc;
-        info.method = 'gcc-phat';
-        info.events1 = [];
-        info.events2 = [];
+    else
+        refined_lag_samples = raw_lag_samples;
     end
+    
+    time_shift = refined_lag_samples * dt;
+    
+    %% 5. Output Preparation
+    % To visualize the alignment, we shift x2 to match x1.
+    % If time_shift is positive, it means x1 is "ahead" of x2 (x2 is delayed).
+    % To align, we shift x2 "left" (subtract delay) or simply sample at shifted times.
+    
+    % Create aligned x2 for return
+    % We interpolate the original (non-grid) x2 at times (t_grid - time_shift)
+    x2_shifted = interp1(t2, x2, t_grid - time_shift, 'linear', NaN);
 
-    % Create aligned signals (shift x2 by time_shift)
-    x1_aligned = x1n;
-    x2_aligned = interp1(t_common + time_shift, x2n, t_common, 'linear', NaN);
-
-    % Final plotting if requested
+    debug_info.max_corr = max_corr;
+    debug_info.dt = dt;
+    debug_info.lags = lags;
+    debug_info.r = r;
+    
+    %% 6. Plotting
     if doPlot
-        figure('Name','Robust Alignment','NumberTitle','off','Position',[100 100 1000 600]);
+        figure('Name', 'Robust Time Shift Estimation', 'Color', 'w');
+        
         subplot(2,1,1);
-        plot(t_common, x1n, 'b.'); hold on;
-        plot(t_common, x2n, 'r.');
-        title('Before Alignment'); xlabel('Time [s]'); ylabel('Normalized'); legend('x1','x2');
-        if ~isempty(info.events1)
-            plot(info.events1, zeros(size(info.events1)), 'bo','MarkerFaceColor','b','MarkerSize',8);
-            plot(info.events2, zeros(size(info.events2)), 'ro','MarkerFaceColor','r','MarkerSize',8);
-        end
+        plot(t_grid, x1_grid, 'b', 'DisplayName', 'Sig 1 (Ref)');
+        hold on;
+        plot(t_grid, x2_shifted, 'r--', 'DisplayName', 'Sig 2 (Aligned)');
+        title(sprintf('Aligned Signals (Shift: %.4f s)', time_shift));
+        grid on; legend;
+        
         subplot(2,1,2);
-        plot(t_common, x1_aligned, 'b.'); hold on;
-        plot(t_common, x2_aligned, 'r.');
-        title(sprintf('After Alignment (Shift = %.6f s) — method: %s', time_shift, info.method));
-        xlabel('Time [s]'); ylabel('Normalized'); legend('x1','x2 shifted');
-        hold off;
+        plot(lags*dt, r, 'k');
+        hold on;
+        xline(time_shift, 'r', 'Max Corr');
+        title(['Cross Correlation (Max: ' num2str(max_corr, '%.2f') ')']);
+        xlabel('Lag (s)'); grid on;
     end
 end
