@@ -183,7 +183,7 @@ for i = 1:numPlots
     
     % Plot S2
     if hasMeas2 && ~strcmp(sig2Name, 'None')
-        plot(S2.(sig2Name).time, S2.(sig2Name).data, 'LineWidth', 1.5, 'LineStyle', '--', 'DisplayName', ['S2: ' sig2Name]);
+        plot(S2.(sig2Name).time, S2.(sig2Name).data, 'LineWidth', 1.5,  'DisplayName', ['S2: ' sig2Name]);
         legends{end+1} = ['S2: ' sig2Name];
     end
     

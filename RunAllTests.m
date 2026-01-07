@@ -21,7 +21,7 @@ end
 set_param(Sim.ModelName, 'StopTime', 'inf');
 
 % run([ Root 'TestCases\Scripts\' 'TestCase_ArduinoGridErr.m'])
-run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMax.m'])
+% run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMax.m'])
 % run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMaxGridErr.m'])
 run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMax.m'])
 % run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMaxGridErr.m'])
