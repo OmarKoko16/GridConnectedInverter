@@ -23,7 +23,8 @@ for i = 1:length(StpTimeCalc)
         case 1
             setParam('ModReq',          uint16(1), 'uint16', '1', 'State Space Mode Request')
             setParam('PorISel',         uint16(0), 'uint16', '1', 'Controller Selector (Power Control or Current Control)')
-            setParam('EnableMonitors',  uint16(1), 'uint16', '1', 'Enable Monitoring')                      
+            setParam('EnableMonitors',  uint16(0), 'uint16', '1', 'Enable Monitoring')   
+            setParam('FrcPwr',          uint16(true), 'uint16', '1', 'Force Power Mode')
         case 2
             setParam('PSp',             PwrStp, 'single', 'W', 'Power Setpoint')
         case 3
