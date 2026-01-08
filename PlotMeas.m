@@ -1,4 +1,4 @@
-%% Signal Comparison and Alignment Script
+    %% Signal Comparison and Alignment Script
 % Loads two datasets, allows specific signal alignment using estimate_time_shift, 
 % and offers a UI to map signals for plotting.
 clc; close all;
