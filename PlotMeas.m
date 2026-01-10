@@ -166,9 +166,9 @@ t = tiledlayout(ceil(numPlots/numCols), numCols, 'TileSpacing', 'compact', 'Padd
 axHandles = [];
 
 for i = 1:numPlots
-    ax = nexttile(t);
+    ax(i) = nexttile(t);
     hold on;
-    axHandles = [axHandles; ax]; %#ok<AGROW>
+    axHandles = [axHandles; ax(i)]; %#ok<AGROW>
     
     sig1Name = plotConfig.S1_Signal{i};
     sig2Name = plotConfig.S2_Signal{i};
@@ -191,8 +191,10 @@ for i = 1:numPlots
     ylabel('Amplitude');
     title([sig1Name ' vs ' sig2Name], 'Interpreter', 'none');
     legend('show', 'Interpreter', 'none');
+
     hold off;
 end
+linkaxes(ax,'x')
 
 % Link axes for zooming
 linkaxes(axHandles, 'x');
