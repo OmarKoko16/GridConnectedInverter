@@ -3,6 +3,8 @@ clear;clc;close all
 Root = 'C:\Users\The Professionals\MATLAB\Projects\GridInverter\';
 
 run([ Root '\Parameters.mlx'])
+Sim.CC_Enable      = 4; % 0 == Vdq grid feed forward, 1 == Current Controller, 2 == CurrentControllerPosNegSeq, 4 == Adaptive
+
 run([ Root '\HilParameters.mlx'])
 run([ Root '\CntrlPanel.mlx'])
 load_system([ Root Sim.ModelName '.slx'])
@@ -23,6 +25,6 @@ set_param(Sim.ModelName, 'StopTime', 'inf');
 % run([ Root 'TestCases\Scripts\' 'TestCase_ArduinoGridErr.m'])
 % run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMax.m'])
 % run([ Root 'TestCases\Scripts\' 'TestCase_IdIqSpMaxGridErr.m'])
-run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMax.m'])
-% run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMaxGridErr.m'])
+% run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMax.m'])
+run([ Root 'TestCases\Scripts\' 'TestCase_PQSpMaxGridErr.m'])
 % run([ Root 'TestCases\Scripts\' 'TestCase_OCP.m'])
